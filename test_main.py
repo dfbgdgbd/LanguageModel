@@ -1,131 +1,206 @@
 import json
 from pathlib import Path
-import tempfile
+import subprocess
+import sys
 import unittest
 
-from main import CharacterNGramLanguageModel, QueryAssistantModel
+from smalllm import AdvancedAssistant, AssistantSettings
+from smalllm.assistant import generation_is_grounded
+from smalllm.backend import GenerationSettings, ScratchTokenizer, ScratchTransformerBackend
+from smalllm.config import (
+    DEFAULT_CHECKPOINT_PATH,
+    DEFAULT_CORPUS_PATH,
+    DEFAULT_RETRIEVAL_INDEX,
+    DEFAULT_RETRIEVAL_CORPUS_PATH,
+    DEFAULT_TOKENIZER_PATH,
+    DEFAULT_TRAINING_REPORT,
+    PROJECT_ROOT,
+)
+from smalllm.retrieval import TrainedRetriever, load_corpus
+from smalllm.tools import run_tool
 
 
-class CharacterNGramLanguageModelTests(unittest.TestCase):
-    def test_seeded_generation_is_reproducible(self) -> None:
-        model = CharacterNGramLanguageModel(order=3)
-        model.train("red bird blue bird green bird")
+class ToolTests(unittest.TestCase):
+    def test_arithmetic(self) -> None:
+        result = run_tool("What is 19 * (4 + 2)?")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.name, "calculator")
+        self.assertEqual(result.text, "The result is 114.")
 
-        first = model.generate("bird", length=40, temperature=0.8, seed=12)
-        second = model.generate("bird", length=40, temperature=0.8, seed=12)
+    def test_unit_conversion(self) -> None:
+        result = run_tool("Convert 32 fahrenheit to celsius")
+        self.assertIsNotNone(result)
+        self.assertIn("0 c", result.text)
 
-        self.assertEqual(first, second)
-        self.assertEqual(len(first), len("bird") + 40)
+    def test_text_statistics(self) -> None:
+        result = run_tool("Count words in: a small useful model")
+        self.assertEqual(result.text, "Words: 4; characters: 20; lines: 1.")
 
-    def test_unknown_context_uses_backoff(self) -> None:
-        model = CharacterNGramLanguageModel(order=4)
-        model.train("abcabcabc")
+    def test_json_validation(self) -> None:
+        valid = run_tool('Validate JSON: {"ready": true}')
+        invalid = run_tool('Validate JSON: {"ready": nope}')
+        self.assertIn('"ready": true', valid.text)
+        self.assertIn("Invalid JSON", invalid.text)
 
-        result = model.generate("totally unseen", length=20, seed=4)
+    def test_arbitrary_python_is_never_executed(self) -> None:
+        self.assertIsNone(run_tool("calculate __import__('os').getcwd()"))
 
-        self.assertEqual(len(result), len("totally unseen") + 20)
-        self.assertTrue(set(result[-20:]).issubset(set("abc")))
+    def test_reschedule_email_draft(self) -> None:
+        result = run_tool("Write a polite email asking to reschedule a meeting")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.name, "email_draft")
+        self.assertIn("Request to Reschedule", result.text)
 
-    def test_save_and_load_preserve_output(self) -> None:
-        model = CharacterNGramLanguageModel(order=2)
-        model.train("one fish two fish")
-
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "model.json"
-            model.save(path)
-            loaded = CharacterNGramLanguageModel.load(path)
-
-        self.assertEqual(model.to_dict(), loaded.to_dict())
-        self.assertEqual(
-            model.generate(length=25, seed=3),
-            loaded.generate(length=25, seed=3),
+    def test_guided_programming_and_http_responses(self) -> None:
+        python_result = run_tool(
+            "Write a Python function that removes duplicate strings while preserving order"
         )
-
-    def test_invalid_model_version_is_rejected(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "bad.json"
-            path.write_text(json.dumps({"version": 99}), encoding="utf-8")
-
-            with self.assertRaisesRegex(ValueError, "unsupported character model"):
-                CharacterNGramLanguageModel.load(path)
+        http_result = run_tool("What should I check when debugging an HTTP 500 error?")
+        self.assertEqual(python_result.name, "python_help")
+        self.assertIn("dict.fromkeys", python_result.text)
+        self.assertEqual(http_result.name, "http_troubleshooting")
+        self.assertIn("server/application logs", http_result.text)
 
 
-class QueryAssistantModelTests(unittest.TestCase):
+class CorpusAndRetrievalTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.model = QueryAssistantModel.load("model.json")
-
-    def assert_topic(self, query: str, expected_topic: str) -> None:
-        _, topic, score = self.model.answer(query)
-        self.assertEqual(topic, expected_topic, msg=f"query={query!r}, score={score}")
-
-    def test_conversation_query(self) -> None:
-        answer, topic, score = self.model.answer("Hello")
-
-        self.assertEqual(topic, "greeting")
-        self.assertGreaterEqual(score, 0.9)
-        self.assertIn("help", answer.lower())
-
-    def test_varied_queries_match_intended_topics(self) -> None:
-        cases = {
-            "How does a plant turn light into energy?": "photosynthesis",
-            "Can you help me debug a script?": "debugging",
-            "Explain neural attention models": "transformer",
-            "How can I organize a complicated project?": "task_planning",
-            "Why should passwords be different?": "passwords",
-            "What molecule carries inherited traits?": "dna",
-            "Write a concise business email": "professional_email",
-        }
-
-        for query, topic in cases.items():
-            with self.subTest(query=query):
-                self.assert_topic(query, topic)
-
-    def test_arithmetic_uses_calculator(self) -> None:
-        answer, topic, score = self.model.answer("What is 19 * (4 + 2)?")
-
-        self.assertEqual(answer, "The result is 114.")
-        self.assertEqual(topic, "calculator")
-        self.assertEqual(score, 1.0)
-
-    def test_unknown_query_does_not_invent_an_answer(self) -> None:
-        answer, topic, score = self.model.answer(
-            "How do I calibrate a quantum magnetometer?"
+        cls.records = load_corpus(DEFAULT_CORPUS_PATH)
+        cls.retrieval_records = load_corpus(DEFAULT_RETRIEVAL_CORPUS_PATH)
+        cls.retriever = TrainedRetriever(
+            DEFAULT_RETRIEVAL_CORPUS_PATH, DEFAULT_RETRIEVAL_INDEX
         )
 
-        self.assertIsNone(topic)
-        self.assertLess(score, 0.24)
-        self.assertIn("do not have enough", answer)
+    def test_expanded_corpus_size_and_sources(self) -> None:
+        self.assertEqual(len(self.records), 11_262)
+        sources = {record["source"] for record in self.records}
+        self.assertEqual(
+            sources,
+            {
+                "smalllm_curated",
+                "OpenAssistant/oasst1",
+                "OpenAssistant/oasst2",
+            },
+        )
+        self.assertGreaterEqual(len(self.retrieval_records), 25_000)
+        self.assertIn(
+            "databricks/databricks-dolly-15k",
+            {record["source"] for record in self.retrieval_records},
+        )
 
-    def test_response_selection_is_reproducible(self) -> None:
-        first = self.model.answer("Tell me a joke", seed=8)
-        second = self.model.answer("Tell me a joke", seed=8)
+    def test_common_queries_find_relevant_answers(self) -> None:
+        cases = {
+            "difference between weather and climate": "weather",
+            "how to recognize a phishing message": "phishing",
+            "write a professional email": "email",
+            "what is photosynthesis": "photosynthesis",
+        }
+        for query, expected in cases.items():
+            with self.subTest(query=query):
+                result = self.retriever.search(query, 1)[0]
+                combined = f"{result.prompt} {result.response}".lower()
+                self.assertIn(expected, combined)
+                self.assertGreater(result.score, 0.30)
 
+    def test_hybrid_assistant_uses_tools_and_retrieval(self) -> None:
+        assistant = AdvancedAssistant(AssistantSettings(backend="retrieval"))
+        calculation = assistant.respond("Calculate 7 times 8")
+        answer = assistant.respond("How do I recognize phishing?")
+        self.assertEqual(calculation.backend, "tool:calculator")
+        self.assertEqual(calculation.text, "The result is 56.")
+        self.assertEqual(answer.backend, "retrieval")
+        self.assertTrue(
+            {"credentials", "sender", "link"}.intersection(answer.text.lower().split())
+        )
+
+    def test_chat_memory_keeps_recent_turns(self) -> None:
+        assistant = AdvancedAssistant(AssistantSettings(backend="retrieval"))
+        assistant.respond("Hello")
+        assistant.respond("What is JSON?")
+        self.assertEqual(len(assistant.history), 4)
+        self.assertEqual(assistant.history[0]["role"], "user")
+        self.assertEqual(assistant.history[-1]["role"], "assistant")
+
+    def test_generation_grounding_gate(self) -> None:
+        self.assertTrue(
+            generation_is_grounded(
+                "Explain photosynthesis",
+                "Photosynthesis lets plants use light to make stored chemical energy.",
+            )
+        )
+        self.assertFalse(
+            generation_is_grounded(
+                "Explain photosynthesis", "The game is a common type of music."
+            )
+        )
+
+
+class FromScratchModelTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.tokenizer = ScratchTokenizer(DEFAULT_TOKENIZER_PATH)
+        cls.backend = ScratchTransformerBackend(
+            settings=GenerationSettings(max_new_tokens=12, temperature=0), seed=11
+        )
+
+    def test_tokenizer_was_trained_and_has_special_tokens(self) -> None:
+        self.assertEqual(self.tokenizer.vocab_size, 8_000)
+        self.assertIsInstance(self.tokenizer.token_to_id("<assistant>"), int)
+        encoded = self.tokenizer.encode("SmallLM answers questions.")
+        self.assertGreater(len(encoded), 2)
+        self.assertIn("SmallLM", self.tokenizer.decode(encoded))
+
+    def test_checkpoint_has_expected_architecture(self) -> None:
+        self.assertEqual(self.backend.parameter_count(), 6_836_224)
+        self.assertEqual(self.backend.config.n_layers, 6)
+        self.assertEqual(self.backend.config.n_heads, 8)
+        self.assertEqual(self.backend.config.max_seq_len, 192)
+
+    def test_generation_is_reproducible_and_contains_no_control_tokens(self) -> None:
+        prompt = "<bos><system>\nYou are helpful.\n<user>\nHello\n<assistant>\n"
+        first = self.backend.generate(prompt)
+        second_backend = ScratchTransformerBackend(
+            settings=GenerationSettings(max_new_tokens=12, temperature=0), seed=11
+        )
+        second = second_backend.generate(prompt)
         self.assertEqual(first, second)
+        self.assertTrue(first.strip())
+        self.assertNotIn("<assistant>", first)
 
-    def test_hybrid_save_and_load_preserve_answers(self) -> None:
-        instructions = [
-            {
-                "topic": "greeting",
-                "prompts": ["hello", "good morning"],
-                "responses": ["Hello!", "Good morning!"],
-            },
-            {
-                "topic": "python",
-                "prompts": ["what is python", "explain python programming"],
-                "responses": ["Python is a programming language."],
-            },
-        ]
-        model = QueryAssistantModel(order=2)
-        model.train("A tiny training corpus.", instructions)
+    def test_training_report_proves_random_initialization(self) -> None:
+        report = json.loads(DEFAULT_TRAINING_REPORT.read_text(encoding="utf-8"))
+        self.assertTrue(report["trained_from_scratch"])
+        self.assertFalse(report["pretrained_weights_used"])
+        self.assertEqual(report["corpus_records"], 11_262)
+        self.assertGreaterEqual(report["steps"], 7_000)
 
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "assistant.json"
-            model.save(path)
-            loaded = QueryAssistantModel.load(path)
 
-        self.assertEqual(model.to_dict(), loaded.to_dict())
-        self.assertEqual(model.answer("hello", seed=2), loaded.answer("hello", seed=2))
+class ProjectTests(unittest.TestCase):
+    def test_cli_retrieval_smoke(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "main.py",
+                "ask",
+                "--backend",
+                "retrieval",
+                "--prompt",
+                "Hello",
+            ],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertTrue(result.stdout.strip())
+
+    def test_project_stays_under_two_gibibytes(self) -> None:
+        total = sum(
+            path.stat().st_size
+            for path in PROJECT_ROOT.rglob("*")
+            if path.is_file()
+        )
+        self.assertLess(total, 2 * 1024**3)
 
 
 if __name__ == "__main__":
