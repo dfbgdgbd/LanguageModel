@@ -25,6 +25,12 @@ class RetrievedDocument:
     record_id: str
 
 
+def corpus_sha256(path: str | Path) -> str:
+    """Hash text canonically so Git's Windows line endings do not break artifacts."""
+    content = Path(path).read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(content).hexdigest()
+
+
 QUERY_EXPANSIONS = {
     "duplicate": "unique distinct deduplicate set",
     "duplicates": "unique distinct deduplicate set",
@@ -182,7 +188,7 @@ def train_retrieval_index(
         "prompt_matrix": prompt_matrix,
         "response_matrix": response_matrix,
         "record_count": len(records),
-        "corpus_sha256": hashlib.sha256(Path(corpus_path).read_bytes()).hexdigest(),
+        "corpus_sha256": corpus_sha256(corpus_path),
     }
     destination = Path(output_path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -204,7 +210,7 @@ class TrainedRetriever:
             raise ValueError("unsupported retrieval index version")
         if int(artifact["record_count"]) != len(self.records):
             raise ValueError("retrieval index and corpus have different record counts")
-        checksum = hashlib.sha256(Path(corpus_path).read_bytes()).hexdigest()
+        checksum = corpus_sha256(corpus_path)
         if artifact["corpus_sha256"] != checksum:
             raise ValueError("retrieval index does not match the corpus")
         self.prompt_vectorizer = artifact["prompt_vectorizer"]

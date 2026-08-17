@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 from pathlib import Path
@@ -24,7 +23,7 @@ from smalllm.config import (
     DEFAULT_TRAINING_REPORT,
     SPECIAL_TOKENS,
 )
-from smalllm.retrieval import load_corpus
+from smalllm.retrieval import corpus_sha256, load_corpus
 
 
 def train_tokenizer(
@@ -211,7 +210,7 @@ def main() -> int:
         dropout=args.dropout,
     )
     model = build_model(config)
-    corpus_sha256 = hashlib.sha256(args.corpus.read_bytes()).hexdigest()
+    corpus_checksum = corpus_sha256(args.corpus)
     initial_step = 0
     previous_history = []
     previous_best_validation = float("inf")
@@ -225,7 +224,7 @@ def main() -> int:
             raise ValueError("checkpoint architecture does not match training arguments")
         training_state = payload.get("training_state", {})
         recorded_hash = training_state.get("corpus_sha256")
-        if recorded_hash and recorded_hash != corpus_sha256:
+        if recorded_hash and recorded_hash != corpus_checksum:
             raise ValueError("checkpoint was trained on a different corpus")
         model.load_state_dict(payload["model_state"])
         initial_step = int(training_state.get("step", 0))
@@ -317,7 +316,7 @@ def main() -> int:
                     "parameter_count": parameter_count,
                     "corpus_records": len(records),
                     "seed": args.seed,
-                    "corpus_sha256": corpus_sha256,
+                    "corpus_sha256": corpus_checksum,
                 },
             )
         if stop:
@@ -333,7 +332,7 @@ def main() -> int:
         "steps": initial_step + step,
         "run_steps": step,
         "resumed": args.resume,
-        "corpus_sha256": corpus_sha256,
+        "corpus_sha256": corpus_checksum,
         "best_validation_loss": best_validation,
         "best_validation_perplexity": math.exp(min(best_validation, 20)),
         "seconds": time.perf_counter() - started,
