@@ -74,6 +74,33 @@ Choose a backend explicitly:
 .venv\Scripts\python.exe main.py ask --backend retrieval --prompt "Your question"
 ```
 
+## Color terminal interface
+
+After running `setup.ps1`, double-click **Start_SmallLM.bat** on Windows. This
+launcher works even when Windows has no usable `.py` file association. You can
+also double-click **Main_Run_Program.py** when `.py` files are associated with
+Python, or launch it from a terminal:
+
+```powershell
+.venv\Scripts\python.exe Main_Run_Program.py
+```
+
+The home page has two large choices:
+
+- **Start Chat** opens a spacious, color-coded conversation screen. SmallLM
+  displays animated thinking dots while it works, then progressively types its
+  answer into a response panel.
+- **Settings** changes the response backend, temperature, top-k sampling,
+  response length, repetition controls, retrieval threshold, and typing speed.
+
+Settings are session-only by design. They are never written to disk, so every
+new launch restores the documented defaults. The active model settings remain
+visible in the upper-right corner of the chat screen.
+
+While chatting, use `/clear` to erase conversation memory, `/help` to list
+commands, `/back` to return to the home page, or `/quit` to close the program.
+The original `main.py` command-line interface remains available for scripting.
+
 ## Interactive chat
 
 ```powershell
@@ -144,6 +171,8 @@ tokenizer, and retrieval index.
 ## Repository layout
 
 ```text
+Main_Run_Program.py             color terminal home, settings, and chat UI
+Start_SmallLM.bat               reliable one-click Windows launcher
 main.py                         command-line interface
 smalllm/backend.py              transformer architecture and generation
 smalllm/assistant.py            tools, retrieval, memory, routing

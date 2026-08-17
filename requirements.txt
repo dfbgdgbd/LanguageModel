@@ -5,3 +5,4 @@ tokenizers==0.23.1
 scikit-learn==1.9.0
 joblib==1.5.3
 tqdm==4.70.0
+rich==15.0.0
