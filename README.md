@@ -1,8 +1,15 @@
 # SmallLM — From-Scratch Local Language Model
 
+## What this project is
+
 SmallLM is a new decoder-only transformer whose tokenizer and 6.8 million
 parameters are trained from random initialization by this repository. It does
 not import or wrap another language model and does not use pretrained weights.
+It is a compact, educational local assistant: the model, retrieval data,
+inference code, training code, and terminal chat interface can all be inspected
+and run from this repository.
+
+## How it works
 
 The assistant combines four components:
 
@@ -16,6 +23,14 @@ The assistant combines four components:
 This hybrid design gives precise answers when a close training example exists,
 uses the transformer for novel generation, and handles calculations with code
 instead of guessing.
+
+For each prompt, SmallLM first checks whether a deterministic tool can answer
+it. Otherwise, the retrieval system ranks the locally stored training scenarios.
+In the recommended `hybrid` mode, a strong match is returned directly; when no
+match is strong enough, the project's transformer generates a response using
+the recent chat history. A grounding check rejects disconnected generations and
+uses a retrieved fallback or clearly reports uncertainty. The color terminal UI
+displays this response pipeline as an ordinary streaming chat experience.
 
 ## Project scale
 
@@ -40,6 +55,21 @@ Python 3.11 is recommended. With [uv](https://docs.astral.sh/uv/) installed:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
+
+### Why Python 3.11 and uv?
+
+Python 3.11 is the version used to build and test this repository. It satisfies
+the declared Python requirements of the pinned numerical and machine-learning
+packages, including the current NumPy and scikit-learn builds, while providing
+well-supported Windows wheels. Newer Python versions may work, but they are not
+the tested baseline for the committed checkpoint and scripts.
+
+`uv` keeps this choice isolated from the computer's system Python. The setup
+script asks it to create `.venv` with Python 3.11 and install the exact package
+versions from `requirements.txt`. If 3.11 is not already installed, `uv` can
+[download the requested Python version automatically](https://docs.astral.sh/uv/guides/install-python/).
+This makes setup repeatable and avoids changing packages belonging to other
+Python projects or the operating system.
 
 The environment contains PyTorch and data-processing libraries only. No model
 download occurs because the trained tokenizer, retrieval index, and SmallLM

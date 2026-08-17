@@ -229,13 +229,8 @@ class SmallLMTerminal:
     def _title_panel(self, subtitle: str) -> Panel:
         title = Text("S M A L L L M", style="bold bright_cyan", justify="center")
         tagline = Text(subtitle, style="bright_white", justify="center")
-        local = Text(
-            "FROM-SCRATCH  |  LOCAL  |  PRIVATE",
-            style="bold blue",
-            justify="center",
-        )
         return Panel(
-            Align.center(Group(title, Text(""), tagline, local)),
+            Align.center(Group(title, Text(""), tagline)),
             box=DOUBLE,
             border_style="bright_blue",
             padding=(1, 3),
@@ -257,7 +252,10 @@ class SmallLMTerminal:
     def show_home(self) -> str:
         self.console.clear()
         self.console.print(
-            self._title_panel("A colorful console for your own trained language model")
+            self._title_panel(
+                "This is a small ~6m parameter model running on limited training data, "
+                "improvements to be made"
+            )
         )
         self.console.print()
         buttons = Table.grid(expand=True, padding=(0, 1))
@@ -382,7 +380,7 @@ class SmallLMTerminal:
                 Group(
                     Text("SMALLLM CHAT", style="bold bright_cyan", justify="center"),
                     Text(
-                        "Your locally trained assistant is ready",
+                        "Commands:",
                         style="bright_white",
                         justify="center",
                     ),
@@ -398,8 +396,8 @@ class SmallLMTerminal:
             padding=(1, 1),
         )
         layout = Table.grid(expand=True, padding=(0, 1))
-        layout.add_column(ratio=3)
-        layout.add_column(min_width=32, ratio=1)
+        layout.add_column(ratio=1)
+        layout.add_column(width=32)
         layout.add_row(chat_title, self._compact_settings_panel())
         return layout
 
