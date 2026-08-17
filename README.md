@@ -1,118 +1,175 @@
-# SmallLM Query Assistant
+# SmallLM — From-Scratch Local Language Model
 
-SmallLM is a dependency-free educational language-model project. It is trained
-on a varied instruction dataset and provides two modes:
+SmallLM is a new decoder-only transformer whose tokenizer and 6.8 million
+parameters are trained from random initialization by this repository. It does
+not import or wrap another language model and does not use pretrained weights.
 
-- a TF-IDF query-response model for grounded answers; and
-- a character n-gram generator for experimental text continuation.
+The assistant combines four components:
 
-The included `model.json` is already trained, so it works immediately with
-Python 3.10 or newer. It requires no GPU, API key, download, or third-party
-package.
+1. a byte-level BPE tokenizer trained on the project corpus;
+2. a six-layer causal transformer trained for instruction responses;
+3. a word-and-character TF-IDF retrieval index trained on an expanded human
+   instruction corpus;
+4. deterministic tools for arithmetic, dates, unit conversion, JSON, and text
+   statistics, plus common professional email drafts.
 
-## Ask a question
+This hybrid design gives precise answers when a close training example exists,
+uses the transformer for novel generation, and handles calculations with code
+instead of guessing.
+
+## Project scale
+
+- 11,262 filtered instruction-response pairs
+- 10,968 human-written OpenAssistant pairs and 294 original curated pairs
+- 25,189 retrieval scenarios, including 13,927 human-written Dolly records
+- 8,000-token tokenizer vocabulary
+- 6,836,224 trainable transformer parameters
+- 6 transformer layers, 8 attention heads, 256 hidden dimensions
+- 192-token context window
+- 7,056 full training steps over eight epochs
+- final validation loss 4.5536 and perplexity 94.97
+- no pretrained model or embedding weights
+- complete project storage remains below 2 GB, including the local environment
+
+See [DATA_SOURCES.md](DATA_SOURCES.md) for dataset provenance and filtering.
+
+## Install
+
+Python 3.11 is recommended. With [uv](https://docs.astral.sh/uv/) installed:
 
 ```powershell
-python main.py ask --prompt "Hello"
-python main.py ask --prompt "How do plants turn light into energy?"
-python main.py ask --prompt "What is 19 * (4 + 2)?"
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
 ```
 
-To inspect the matched topic and confidence score:
+The environment contains PyTorch and data-processing libraries only. No model
+download occurs because the trained tokenizer, retrieval index, and SmallLM
+checkpoint are committed to this repository.
+
+## Ask questions
 
 ```powershell
-python main.py ask --prompt "How do I debug a Python script?" --show-score
+.venv\Scripts\python.exe main.py ask --prompt "Hello"
+.venv\Scripts\python.exe main.py ask --prompt "How do I debug an HTTP 500 error?"
+.venv\Scripts\python.exe main.py ask --prompt "Convert 25 celsius to fahrenheit"
 ```
 
-SmallLM returns an honest unknown response when a query does not match its
-training data strongly enough. The `--threshold` option controls the minimum
-confidence, with `0.24` as the default.
+Show which component answered and the retrieval score:
+
+```powershell
+.venv\Scripts\python.exe main.py ask `
+  --prompt "Explain photosynthesis simply" `
+  --show-score
+```
+
+Choose a backend explicitly:
+
+```powershell
+# Recommended: retrieval for strong matches, transformer otherwise
+.venv\Scripts\python.exe main.py ask --backend hybrid --prompt "Your question"
+
+# Always generate with the new transformer
+.venv\Scripts\python.exe main.py ask --backend transformer --prompt "Your question"
+
+# Only retrieve a trained response
+.venv\Scripts\python.exe main.py ask --backend retrieval --prompt "Your question"
+```
 
 ## Interactive chat
 
 ```powershell
-python main.py chat
+.venv\Scripts\python.exe main.py chat --show-backend
 ```
 
-Enter questions at the `You:` prompt. Type `quit` or `exit` to stop.
+The chat loop keeps the recent conversation in the transformer's prompt. The
+hybrid backend rejects topically disconnected generations and falls back to a
+retrieved human response or an explicit uncertainty. Type `quit` or `exit` to
+stop.
 
-## Train the model
+## Direct transformer generation
 
 ```powershell
-python main.py train
-```
-
-The default training command combines:
-
-- `data/instructions.json`: prompt paraphrases and verified responses across
-  conversation, programming, science, writing, productivity, security, and
-  model concepts;
-- `data/training.txt`: general prose for the creative generator.
-
-It writes the trained retrieval weights, instruction responses, and n-gram
-counts to `model.json`. To teach a new topic, add an object like this to the
-instruction file and retrain:
-
-```json
-{
-  "topic": "example_topic",
-  "prompts": [
-    "first way a user might ask",
-    "a different phrasing of the same question"
-  ],
-  "responses": [
-    "A concise, accurate response."
-  ]
-}
-```
-
-Use several realistic paraphrases per topic. Evaluate with separate questions
-that are not exact copies of the training prompts.
-
-Custom paths and generator order are supported:
-
-```powershell
-python main.py train `
-  --instructions data/instructions.json `
-  --data data/training.txt `
-  --model model.json `
-  --order 5
-```
-
-## Creative text continuation
-
-The n-gram component remains available for probabilistic continuation:
-
-```powershell
-python main.py generate `
-  --prompt "Language models " `
-  --length 300 `
-  --temperature 0.8 `
+.venv\Scripts\python.exe main.py generate `
+  --prompt "<bos><system>`nYou are helpful.`n<user>`nExplain gravity.`n<assistant>`n" `
+  --max-new-tokens 100 `
+  --temperature 0.7 `
+  --top-k 40 `
   --seed 42
 ```
 
-Lower temperature is more predictable; higher temperature adds variety. A
-fixed seed makes output reproducible.
+## Rebuild the data and train from scratch
 
-## Inspect and test
+Dataset preparation downloads OASST1, OASST2, and Databricks Dolly, applies the
+documented safety and quality filters, removes duplicates, and writes separate
+deterministic transformer-training and retrieval JSONL files:
 
 ```powershell
-python main.py info
-python -m unittest -v
+uv pip install --python .venv\Scripts\python.exe -r requirements-data.txt
+.venv\Scripts\python.exe main.py prepare-data
 ```
 
-The checked-in model contains 63 response topics, 294 instruction examples,
-and 56,815 characters of combined generator training text.
+Train the retrieval index, tokenizer, and transformer:
 
-## How query answering works
+```powershell
+.venv\Scripts\python.exe main.py train `
+  --epochs 8 `
+  --batch-size 12 `
+  --rebuild-tokenizer
+```
 
-Training converts every example prompt into TF-IDF word and phrase features.
-At query time, cosine similarity selects the closest example. The associated
-topic supplies a verified response only when the score meets the confidence
-threshold. Basic arithmetic is evaluated by a restricted local calculator.
+Training runs on CPU, holds out five percent of examples for validation, masks
+prompt tokens so loss focuses on assistant responses, uses AdamW with warmup and
+cosine decay, clips gradients, and saves the best validation checkpoint after
+each epoch. All random generators use a configurable seed. Add `--resume` to
+continue a checkpoint on the same checksummed corpus with a fresh optimizer.
 
-This produces much more useful query behavior than raw character prediction,
-but it is not equivalent to a modern pretrained LLM. It cannot synthesize broad
-knowledge or perform deep general reasoning. Reaching that level requires a
-large neural transformer, extensive training data and compute, or integration
-with an existing pretrained model.
+Advanced architecture options are available directly through
+`scripts/train_transformer.py`:
+
+```powershell
+.venv\Scripts\python.exe scripts\train_transformer.py --help
+```
+
+## Inspect and evaluate
+
+```powershell
+.venv\Scripts\python.exe main.py info
+.venv\Scripts\python.exe scripts\evaluate.py --backend retrieval
+.venv\Scripts\python.exe scripts\evaluate.py --backend hybrid --limit 5
+.venv\Scripts\python.exe -m unittest -v
+```
+
+Generated reports are saved under `artifacts/` with the trained checkpoint,
+tokenizer, and retrieval index.
+
+## Repository layout
+
+```text
+main.py                         command-line interface
+smalllm/backend.py              transformer architecture and generation
+smalllm/assistant.py            tools, retrieval, memory, routing
+smalllm/retrieval.py            from-scratch TF-IDF retrieval model
+smalllm/tools.py                deterministic utility tools
+scripts/prepare_dataset.py      internet dataset filtering and assembly
+scripts/build_index.py          retrieval training
+scripts/train_transformer.py    tokenizer and transformer training loop
+scripts/evaluate.py             multi-scenario smoke evaluation
+data/instructions.json          original curated examples
+data/instructions_large.jsonl   11,262-pair training corpus
+data/knowledge_large.jsonl      25,189-scenario retrieval corpus
+artifacts/tokenizer.json        trained BPE tokenizer
+artifacts/retrieval_index.joblib trained sparse retrieval weights
+artifacts/smalllm_checkpoint.pt trained transformer weights
+artifacts/training_report.json  reproducible metrics and configuration
+```
+
+## Limitations
+
+SmallLM is genuinely trained from scratch, but 6.8 million parameters and
+11,262 transformer-training pairs are tiny compared with commercial LLMs. The
+raw `transformer` backend can still produce incorrect, repetitive, fragmented,
+or shallow responses. The recommended `hybrid` backend is more reliable because
+it combines 25,189 retrieval scenarios, deterministic tools, and a grounding
+gate, but retrieval quality still depends on corpus coverage. Its 192-token
+context is short. Treat it as an educational and locally inspectable model, not
+an authoritative source. Verify high-stakes medical, legal, financial,
+security, and factual outputs independently.

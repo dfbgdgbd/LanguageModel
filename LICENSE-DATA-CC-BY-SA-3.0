@@ -1,0 +1,15 @@
+Data license notice
+
+The Databricks Dolly-derived records in data/knowledge_large.jsonl are licensed
+under the Creative Commons Attribution-ShareAlike 3.0 Unported License.
+
+Copyright (2023) Databricks, Inc. Certain Dolly categories include material
+from Wikipedia editors and contributors. Modifications in this repository
+include filtering, normalization, provenance fields, and combination with other
+records.
+
+License terms: https://creativecommons.org/licenses/by-sa/3.0/legalcode
+Human-readable summary: https://creativecommons.org/licenses/by-sa/3.0/
+
+This notice does not relicense the repository's Apache-2.0 code or the
+OpenAssistant-derived records.

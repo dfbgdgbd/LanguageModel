@@ -42,7 +42,7 @@
   {
     "topic": "improve_model",
     "prompts": ["how can I improve this model", "make the assistant smarter", "get better responses", "improve query matching", "expand the model knowledge"],
-    "responses": ["Add several realistic prompt paraphrases and concise verified responses for each new topic, retrain, then evaluate with held-out questions that are not exact copies of training prompts.", "Improve it by expanding clean instruction data, measuring retrieval accuracy, tuning the confidence threshold, and eventually replacing retrieval with a pretrained transformer when broader reasoning is required."]
+    "responses": ["Add several realistic prompt paraphrases and concise verified responses for each new topic, retrain, then evaluate with held-out questions that are not exact copies of training prompts.", "Improve it by expanding clean instruction data, increasing the from-scratch transformer's capacity, training for more tokens, measuring retrieval accuracy, and evaluating on held-out scenarios."]
   },
   {
     "topic": "temperature",

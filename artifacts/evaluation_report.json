@@ -1,0 +1,142 @@
+[
+  {
+    "query": "Explain how photosynthesis stores energy in simple terms.",
+    "response": "Photosynthesis is a process used by plants, algae, and some types of bacteria to convert light energy into chemical energy that can later be released to fuel the organism's activities. During photosynthesis, plants absorb carbon dioxide (CO2) and water (H2O) from the air and soil. Inside the plant cell, the water is oxidized, meaning it loses electrons, while the carbon dioxide is reduced, meaning it gains electrons. This converts the water into oxygen and the carbon dioxide into glucose. The plant then releases the oxygen back into the air and stores energy in the glucose molecules.\n\nWant to learn more about this topic?",
+    "backend": "retrieval",
+    "seconds": 0.045,
+    "top_retrieval_score": 0.6052
+  },
+  {
+    "query": "Write a Python function that removes duplicate strings while preserving order.",
+    "response": "Use a dictionary to preserve the first occurrence of each hashable item:\n\n```python\ndef remove_duplicates(items):\n    return list(dict.fromkeys(items))\n```\n\nExample: `remove_duplicates(['a', 'b', 'a'])` returns `['a', 'b']`. For unhashable items, use a loop and append an item only when it is not already in the output list.",
+    "backend": "tool:python_help",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Help me structure a professional project update email.",
+    "response": "Use a specific subject, a brief greeting, the purpose in the first sentence, necessary context, a clear request or next step, and a polite closing. Proofread names, dates, and attachments.",
+    "backend": "retrieval-fallback",
+    "seconds": 2.57,
+    "top_retrieval_score": 0.3451
+  },
+  {
+    "query": "Compare REST and GraphQL APIs.",
+    "response": "REST commonly exposes multiple resource-oriented URLs and uses HTTP methods such as GET, POST, PUT, and DELETE. It is simple, cache-friendly, and widely supported, but clients can over-fetch or make several requests. GraphQL usually exposes one typed query endpoint where clients request exact fields. That improves flexibility and reduces over-fetching, but adds schema, resolver, authorization, query-cost, and caching complexity. Choose based on client data needs and operational constraints rather than assuming one is always better.",
+    "backend": "tool:api_comparison",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Give me a three-day study plan for a biology exam.",
+    "response": "Three-day Biology study plan:\n\n1. Day 1 \u2014 Diagnose and organize: list the tested topics, take a short practice quiz, review weak concepts, and make a one-page summary.\n2. Day 2 \u2014 Active practice: answer problems or flashcards from memory, explain difficult ideas aloud, and correct every missed answer.\n3. Day 3 \u2014 Simulate and consolidate: complete a timed practice set, review only the remaining weak points, then stop early enough to sleep well.\n\nUse focused 25\u201345 minute blocks with short breaks and adjust the time toward the topics with the most marks or lowest practice scores.",
+    "backend": "tool:study_plan",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Explain why database indexes speed up some queries.",
+    "response": "At a high level, an index over a specific table can speed up the execution of a query that accesses the table provided that the query references a compatible subset of columns that the index covers and that the cost of using the index is lower than alternatives (e.g., simply scanning the whole table or using another index). At the same time, the index needs to be kept up-to-date with the table, which means that each table update (insertion or deletion of new rows, or updates to existing rows for the columns that the index covers) will now cost more as the relational database system has to also propagate the update to the index. Thus, the usefulness of adding an index to a workload will depend on the fraction of queries that can benefit from the index, and on the mix of queries and updates.",
+    "backend": "retrieval-fallback",
+    "seconds": 2.274,
+    "top_retrieval_score": 0.4762
+  },
+  {
+    "query": "Brainstorm five names for an environmentally friendly delivery service.",
+    "response": "Five name ideas: GreenRoute Delivery, EcoDrop, LeafLine Logistics, KindCourier, and LowCarbon Local. Check trademark, company-name, domain, and social-handle availability before choosing one.",
+    "backend": "tool:name_ideas",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "What should I check first when debugging an HTTP 500 error?",
+    "response": "An HTTP 500 means the server failed while handling the request. Start with the server/application logs for the matching timestamp and request ID. Then reproduce the request, inspect the exception and stack trace, verify recent deployments and configuration, check database and upstream-service health, and confirm required environment variables and permissions. Avoid exposing stack traces or secrets to clients.",
+    "backend": "tool:http_troubleshooting",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Summarize the difference between weather and climate.",
+    "response": "Weather describes short-term atmospheric conditions at a place and time. Climate describes long-term patterns and distributions of weather over decades or longer.",
+    "backend": "retrieval",
+    "seconds": 0.064,
+    "top_retrieval_score": 0.5894
+  },
+  {
+    "query": "Explain compound interest to a beginner.",
+    "response": "Compound interest means you earn interest on the original amount and on interest already added. The common formula is `A = P(1 + r/n)^(nt)`, where P is the starting principal, r is the annual rate, n is the number of compounding periods per year, and t is years. For example, $100 at 10% compounded annually becomes $110 after one year and $121 after two.",
+    "backend": "tool:finance_explanation",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "What is 18.5 * (7 - 2)?",
+    "response": "The result is 92.5.",
+    "backend": "tool:calculator",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Convert 32 fahrenheit to celsius.",
+    "response": "32 f is approximately 0 c.",
+    "backend": "tool:unit_conversion",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Count words in: A small model can still solve useful tasks.",
+    "response": "Words: 8; characters: 45; lines: 1.",
+    "backend": "tool:text_statistics",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Validate JSON: {\"name\": \"SmallLM\", \"ready\": true}",
+    "response": "{\n  \"name\": \"SmallLM\",\n  \"ready\": true\n}",
+    "backend": "tool:json",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "What is today's date?",
+    "response": "Today's date is Sunday, August 16, 2026.",
+    "backend": "tool:clock",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Create a checklist for launching a small website.",
+    "response": "Website launch checklist:\n\n- Confirm goals, audience, navigation, copy, and contact details.\n- Test every link, form, error state, and call to action.\n- Check mobile layouts, keyboard access, contrast, alt text, and headings.\n- Optimize images, enable HTTPS, set secure headers, and remove test secrets.\n- Add page titles, descriptions, sitemap, robots rules, and a favicon.\n- Configure analytics, privacy/consent requirements, backups, and monitoring.\n- Test on major browsers, proofread, verify the production domain, and keep a rollback plan.",
+    "backend": "tool:launch_checklist",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "Explain recursion with a tiny example.",
+    "response": "Recursion is when a function solves a problem by calling itself on a smaller case. It needs a base case that stops the calls.\n\n```python\ndef factorial(n):\n    if n <= 1:      # base case\n        return 1\n    return n * factorial(n - 1)\n```\n\n`factorial(4)` evaluates to `4 * 3 * 2 * 1`, or 24.",
+    "backend": "tool:programming_explanation",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "How can I recognize a phishing message?",
+    "response": "Do not enter credentials through a link in an unexpected message. Open the known official site yourself and contact the organization directly if unsure.",
+    "backend": "retrieval-fallback",
+    "seconds": 2.19,
+    "top_retrieval_score": 0.3208
+  },
+  {
+    "query": "Suggest a clear outline for a short science report.",
+    "response": "Short science report outline:\n\n1. Title \u2014 specific question or finding.\n2. Introduction \u2014 background, research question, and hypothesis.\n3. Methods \u2014 materials, procedure, variables, and sample.\n4. Results \u2014 observations, measurements, tables, or figures without interpretation.\n5. Discussion \u2014 explain the results, uncertainty, limitations, and whether the hypothesis was supported.\n6. Conclusion \u2014 one concise takeaway and a possible next step.\n7. References \u2014 sources in one consistent citation style.",
+    "backend": "tool:report_outline",
+    "seconds": 0.0,
+    "top_retrieval_score": null
+  },
+  {
+    "query": "What are the tradeoffs between a list and a set in Python?",
+    "response": "Certainly! In Python, both sets and lists are used to store collections of items, but they differ in several important ways.\n\nA list is an ordered collection of items that can be indexed and modified. You can add or remove items from a list using various methods like .append(), .insert(), .remove(), and others. Lists are denoted by square brackets [].\n\nOn the other hand, a set is an unordered collection of unique items that cannot be indexed or modified. You can add or remove items from a set using methods like .add(), .discard(), and others. Sets are denoted by curly braces {}.\n\nHere's an example to illustrate the difference:\n```python\nmy_list = [1, 2, 3, 3, 4, 5]  # this list can contain duplicate values\nmy_set = {1, 2, 3, 3, 4, 5}  # this set contains only unique values\n\nprint(my_list)  # output: [1, 2, 3, 3, 4, 5]\nprint(my_set)   # output: {1, 2, 3, 4, 5}\n```\nIn summary, lists are ordered and allow duplicates, while sets are unordered and contain only unique values.",
+    "backend": "retrieval",
+    "seconds": 0.074,
+    "top_retrieval_score": 0.605
+  }
+]

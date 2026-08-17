@@ -1,0 +1,17 @@
+SmallLM
+
+This product includes filtered instruction-response data from the OpenAssistant
+Conversations Datasets (OASST1 and OASST2), developed by the OpenAssistant contributors and
+distributed under the Apache License, Version 2.0.
+
+Source: https://huggingface.co/datasets/OpenAssistant/oasst1
+Source: https://huggingface.co/datasets/OpenAssistant/oasst2
+Project: https://open-assistant.io/
+
+The retrieval corpus also includes adapted records from Databricks Dolly 15k,
+copyright (2023) Databricks, Inc., licensed under Creative Commons
+Attribution-ShareAlike 3.0 Unported. Some Dolly categories contain material
+adapted from Wikipedia contributors under the same license.
+
+Source: https://huggingface.co/datasets/databricks/databricks-dolly-15k
+License: https://creativecommons.org/licenses/by-sa/3.0/

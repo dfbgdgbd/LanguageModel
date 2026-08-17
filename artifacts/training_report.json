@@ -1,0 +1,66 @@
+{
+  "trained_from_scratch": true,
+  "pretrained_weights_used": false,
+  "parameter_count": 6836224,
+  "corpus_records": 11262,
+  "training_examples": 10574,
+  "validation_examples": 556,
+  "steps": 7056,
+  "run_steps": 7056,
+  "resumed": false,
+  "corpus_sha256": "32192d1de32aa36b192be60d50a544ca6dbe8ddcb58a7ccd0d2e115ae69dc5f1",
+  "best_validation_loss": 4.553566222495221,
+  "best_validation_perplexity": 94.97049101899636,
+  "seconds": 11366.171306099997,
+  "config": {
+    "vocab_size": 8000,
+    "max_seq_len": 192,
+    "d_model": 256,
+    "n_layers": 6,
+    "n_heads": 8,
+    "d_ff": 1024,
+    "dropout": 0.1
+  },
+  "history": [
+    {
+      "run_epoch": 1,
+      "step": 882,
+      "validation_loss": 5.689568012318713
+    },
+    {
+      "run_epoch": 2,
+      "step": 1764,
+      "validation_loss": 5.242121676181225
+    },
+    {
+      "run_epoch": 3,
+      "step": 2646,
+      "validation_loss": 4.980586721542034
+    },
+    {
+      "run_epoch": 4,
+      "step": 3528,
+      "validation_loss": 4.805747772784943
+    },
+    {
+      "run_epoch": 5,
+      "step": 4410,
+      "validation_loss": 4.693322688975233
+    },
+    {
+      "run_epoch": 6,
+      "step": 5292,
+      "validation_loss": 4.617705872718324
+    },
+    {
+      "run_epoch": 7,
+      "step": 6174,
+      "validation_loss": 4.572326954374922
+    },
+    {
+      "run_epoch": 8,
+      "step": 7056,
+      "validation_loss": 4.553566222495221
+    }
+  ]
+}
