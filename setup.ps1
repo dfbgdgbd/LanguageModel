@@ -8,4 +8,5 @@ uv venv --python 3.11 .venv
 uv pip install --python .venv\Scripts\python.exe -r requirements.txt
 
 Write-Host "Environment ready."
-Write-Host "Run: .venv\Scripts\python.exe main.py info"
+Write-Host "Double-click Start_SmallLM.bat to open the terminal interface."
+Write-Host "Or run: .venv\Scripts\python.exe Main_Run_Program.py"

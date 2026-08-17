@@ -18,6 +18,7 @@ from smalllm.config import (
 )
 from smalllm.retrieval import TrainedRetriever, load_corpus
 from smalllm.tools import run_tool
+from Main_Run_Program import RuntimeSettings
 
 
 class ToolTests(unittest.TestCase):
@@ -176,6 +177,37 @@ class FromScratchModelTests(unittest.TestCase):
 
 
 class ProjectTests(unittest.TestCase):
+    def test_terminal_settings_start_at_defaults_and_do_not_persist(self) -> None:
+        first = RuntimeSettings()
+        first.set_from_text("temperature", "1.25")
+        first.set_from_text("backend", "transformer")
+
+        second = RuntimeSettings()
+        self.assertEqual(second.temperature, 0.75)
+        self.assertEqual(second.backend, "hybrid")
+
+    def test_terminal_settings_validate_and_translate(self) -> None:
+        settings = RuntimeSettings()
+        settings.set_from_text("top_k", "72")
+        settings.set_from_text("max_new_tokens", "64")
+        settings.set_from_text("no_repeat_ngram_size", "0")
+        settings.set_from_text("retrieval_threshold", "0.65")
+        translated = settings.assistant_settings()
+
+        self.assertEqual(translated.generation.top_k, 72)
+        self.assertEqual(translated.generation.max_new_tokens, 64)
+        self.assertEqual(translated.generation.no_repeat_ngram_size, 0)
+        self.assertEqual(translated.direct_retrieval_threshold, 0.65)
+        with self.assertRaises(ValueError):
+            settings.set_from_text("temperature", "2.1")
+        with self.assertRaises(ValueError):
+            settings.set_from_text("backend", "external-llm")
+
+    def test_terminal_settings_reset_in_memory(self) -> None:
+        settings = RuntimeSettings(temperature=1.5, typing_delay=0.0)
+        settings.reset()
+        self.assertEqual(settings, RuntimeSettings())
+
     def test_cli_retrieval_smoke(self) -> None:
         result = subprocess.run(
             [
