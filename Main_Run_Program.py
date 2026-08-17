@@ -1,13 +1,14 @@
 """Color terminal interface for chatting with the local SmallLM assistant.
 
-Double-click this file on Windows, or run it with the project's Python
-environment. Settings live only in memory and reset whenever the program exits.
+The public launcher is Start_SmallLM.bat. Settings live only in memory and reset
+whenever the program exits.
 """
 
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, fields
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -46,14 +47,17 @@ except ModuleNotFoundError as error:  # Friendly message when double-clicked too
     if error.name != "rich":
         raise
     print("SmallLM's terminal interface needs the 'rich' package.")
-    print("Run setup.ps1 first, then launch Main_Run_Program.py again.")
+    print("Double-click Start_SmallLM.bat to finish setup and launch SmallLM.")
     if sys.stdin.isatty():
         input("Press Enter to close...")
     raise SystemExit(1) from error
 
 
 APP_TITLE = "SmallLM Terminal"
-MINIMUM_THINK_TIME = 0.65
+DEFAULT_SYSTEM_PROMPT_TEXT = (
+    "You are SmallLM, a helpful local assistant. Follow the request, be concise, "
+    "and say when you are uncertain."
+)
 
 
 @dataclass(frozen=True)
@@ -67,6 +71,7 @@ class SettingDefinition:
     maximum: float | None = None
     integer: bool = False
     choices: tuple[str, ...] = ()
+    text: bool = False
 
 
 SETTING_DEFINITIONS = (
@@ -122,11 +127,48 @@ SETTING_DEFINITIONS = (
         1.0,
     ),
     SettingDefinition(
+        "retrieval_limit",
+        "Retrieval candidates",
+        "number of local matches considered for each prompt",
+        1,
+        10,
+        integer=True,
+    ),
+    SettingDefinition(
+        "max_history_messages",
+        "Conversation memory",
+        "recent user and assistant messages retained in context",
+        2,
+        32,
+        integer=True,
+    ),
+    SettingDefinition(
+        "system_prompt",
+        "System prompt",
+        "instructions that guide generated responses",
+        text=True,
+    ),
+    SettingDefinition(
+        "seed",
+        "Random seed",
+        "reproduces transformer sampling when settings match",
+        0,
+        2_147_483_647,
+        integer=True,
+    ),
+    SettingDefinition(
         "typing_delay",
         "Typing delay",
         "seconds per displayed character; 0 is instant",
         0.0,
         0.05,
+    ),
+    SettingDefinition(
+        "thinking_delay",
+        "Minimum thinking time",
+        "minimum seconds to display the thinking animation",
+        0.0,
+        5.0,
     ),
 )
 
@@ -142,7 +184,12 @@ class RuntimeSettings:
     repetition_penalty: float = 1.18
     no_repeat_ngram_size: int = 4
     retrieval_threshold: float = 0.50
+    retrieval_limit: int = 3
+    max_history_messages: int = 8
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT_TEXT
+    seed: int = 42
     typing_delay: float = 0.008
+    thinking_delay: float = 0.65
 
     def reset(self) -> None:
         """Restore the launch defaults without reading or writing a file."""
@@ -158,7 +205,16 @@ class RuntimeSettings:
         if definition is None:
             raise ValueError(f"Unknown setting: {key}")
 
-        value_text = raw_value.strip().casefold()
+        stripped_value = raw_value.strip()
+        if definition.text:
+            if not stripped_value:
+                raise ValueError("This setting cannot be empty.")
+            if len(stripped_value) > 500:
+                raise ValueError("Text settings are limited to 500 characters.")
+            setattr(self, key, stripped_value)
+            return
+
+        value_text = stripped_value.casefold()
         if definition.choices:
             if value_text not in definition.choices:
                 choices = ", ".join(definition.choices)
@@ -187,6 +243,10 @@ class RuntimeSettings:
         return AssistantSettings(
             backend=self.backend,
             direct_retrieval_threshold=self.retrieval_threshold,
+            retrieval_limit=self.retrieval_limit,
+            max_history_messages=self.max_history_messages,
+            system_prompt=self.system_prompt,
+            seed=self.seed,
             generation=GenerationSettings(
                 max_new_tokens=self.max_new_tokens,
                 temperature=self.temperature,
@@ -198,9 +258,34 @@ class RuntimeSettings:
 
     def display_value(self, key: str) -> str:
         value = getattr(self, key)
+        if key == "system_prompt":
+            return value if len(value) <= 48 else f"{value[:45]}..."
         if isinstance(value, float):
             return f"{value:.3f}" if key == "typing_delay" else f"{value:.2f}"
         return str(value)
+
+
+def model_info_rows() -> tuple[tuple[str, str], ...]:
+    """Read model statistics for the chat interface without loading its weights."""
+    from smalllm.config import DEFAULT_RETRIEVAL_CORPUS_PATH, DEFAULT_TRAINING_REPORT
+
+    report = json.loads(DEFAULT_TRAINING_REPORT.read_text(encoding="utf-8"))
+    config = report["config"]
+    with DEFAULT_RETRIEVAL_CORPUS_PATH.open(encoding="utf-8") as corpus:
+        retrieval_scenarios = sum(1 for line in corpus if line.strip())
+    return (
+        ("Model", "decoder-only transformer"),
+        ("Parameters", f"{report['parameter_count']:,}"),
+        ("Vocabulary", f"{config['vocab_size']:,} tokens"),
+        ("Architecture", f"{config['n_layers']} layers / {config['n_heads']} heads"),
+        ("Context", f"{config['max_seq_len']} tokens"),
+        ("Training pairs", f"{report['corpus_records']:,}"),
+        ("Retrieval scenarios", f"{retrieval_scenarios:,}"),
+        ("Training steps", f"{report['steps']:,}"),
+        ("Validation loss", f"{report['best_validation_loss']:.4f}"),
+        ("Validation perplexity", f"{report['best_validation_perplexity']:.2f}"),
+        ("Pretrained weights", "none"),
+    )
 
 
 class SmallLMTerminal:
@@ -285,18 +370,18 @@ class SmallLMTerminal:
             border_style="bright_magenta",
             header_style="bold bright_white on dark_magenta",
             expand=True,
-            show_lines=True,
+            row_styles=("", "on grey7"),
         )
         table.add_column("#", style="bold bright_magenta", width=3, justify="center")
-        table.add_column("Setting", style="bold bright_cyan", min_width=20)
-        table.add_column("Current", style="bold bright_green", min_width=11)
-        table.add_column("What it changes", style="white", ratio=2)
+        table.add_column("Setting and effect", min_width=28, ratio=2)
+        table.add_column("Current", style="bold bright_green", min_width=18, ratio=1)
         for index, definition in enumerate(SETTING_DEFINITIONS, 1):
+            setting = Text(definition.label, style="bold bright_cyan")
+            setting.append(f"\n{definition.description}", style="dim bright_white")
             table.add_row(
                 str(index),
-                definition.label,
+                setting,
                 self.settings.display_value(definition.key),
-                definition.description,
             )
         return table
 
@@ -336,6 +421,12 @@ class SmallLMTerminal:
                     default=current,
                     console=self.console,
                 )
+            elif definition.text:
+                new_value = Prompt.ask(
+                    f"[bold]{definition.label}[/]",
+                    default=str(getattr(self.settings, definition.key)),
+                    console=self.console,
+                )
             else:
                 value_range = f"{definition.minimum:g}-{definition.maximum:g}"
                 new_value = Prompt.ask(
@@ -365,7 +456,12 @@ class SmallLMTerminal:
             "Penalty / n",
             f"{self.settings.repetition_penalty:.2f} / {self.settings.no_repeat_ngram_size}",
         )
-        details.add_row("Match gate", f">= {self.settings.retrieval_threshold:.2f}")
+        details.add_row(
+            "Retrieval",
+            f"{self.settings.retrieval_limit} @ {self.settings.retrieval_threshold:.2f}",
+        )
+        details.add_row("Memory", f"{self.settings.max_history_messages} messages")
+        details.add_row("Seed", str(self.settings.seed))
         return Panel(
             details,
             title="[bold bright_magenta]LIVE SETTINGS[/]",
@@ -385,7 +481,12 @@ class SmallLMTerminal:
                         justify="center",
                     ),
                     Text(
-                        "/help  |  /clear  |  /back  |  /quit",
+                        "/settings  |  /info  |  /clear",
+                        style="dim",
+                        justify="center",
+                    ),
+                    Text(
+                        "/help  |  /back  |  /quit",
                         style="dim",
                         justify="center",
                     ),
@@ -412,7 +513,10 @@ class SmallLMTerminal:
                 spinner="line",
                 spinner_style="bright_cyan",
             ) as status:
-                while not future.done() or time.monotonic() - started < MINIMUM_THINK_TIME:
+                while (
+                    not future.done()
+                    or time.monotonic() - started < self.settings.thinking_delay
+                ):
                     dots = "." * (frame % 3 + 1)
                     status.update(f"[bold bright_magenta]SmallLM is thinking{dots}[/]")
                     frame += 1
@@ -459,12 +563,30 @@ class SmallLMTerminal:
         help_table = Table.grid(padding=(0, 2))
         help_table.add_column(style="bold bright_cyan")
         help_table.add_column(style="bright_white")
+        help_table.add_row("/settings", "Edit every runtime setting and apply it now")
+        help_table.add_row("/info", "Show architecture and training statistics")
         help_table.add_row("/clear", "Clear conversation memory and redraw the screen")
         help_table.add_row("/back", "Return to the main page")
         help_table.add_row("/quit", "Close SmallLM Terminal")
         help_table.add_row("/help", "Show this command list")
         self.console.print(
             Panel(help_table, title="Chat commands", border_style="bright_blue")
+        )
+
+    def _show_model_info(self) -> None:
+        info = Table.grid(padding=(0, 2))
+        info.add_column(style="bold bright_cyan", no_wrap=True)
+        info.add_column(style="bright_white")
+        for label, value in model_info_rows():
+            info.add_row(label, value)
+        self.console.print(
+            Panel(
+                info,
+                title="[bold bright_magenta]SmallLM model information[/]",
+                border_style="bright_blue",
+                box=ROUNDED,
+                padding=(1, 2),
+            )
         )
 
     def chat(self) -> bool:
@@ -478,7 +600,7 @@ class SmallLMTerminal:
         ):
             assistant = AdvancedAssistant(self.settings.assistant_settings())
         self.console.print(
-            "\n[dim]Type a message below. Use /back to change settings from the home page.[/]\n"
+            "\n[dim]Type a message below. Use /settings to tune the current session.[/]\n"
         )
 
         while True:
@@ -505,6 +627,24 @@ class SmallLMTerminal:
                 continue
             if command == "/help":
                 self._show_chat_help()
+                continue
+            if command in {"/info", "/model"}:
+                self._show_model_info()
+                continue
+            if command == "/settings":
+                history = list(assistant.history)
+                self.show_settings()
+                self.console.clear()
+                self.console.print(self._chat_header())
+                with self.console.status(
+                    "[bold bright_cyan]Applying session settings...[/]",
+                    spinner="line",
+                ):
+                    assistant = AdvancedAssistant(self.settings.assistant_settings())
+                    assistant.history = history[-self.settings.max_history_messages :]
+                self.console.print(
+                    "\n[bold bright_green]Settings applied to this chat.[/]\n"
+                )
                 continue
 
             self.console.print()

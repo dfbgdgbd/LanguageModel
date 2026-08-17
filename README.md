@@ -48,13 +48,14 @@ displays this response pipeline as an ordinary streaming chat experience.
 
 See [DATA_SOURCES.md](DATA_SOURCES.md) for dataset provenance and filtering.
 
-## Install
+## Start chatting
 
-Python 3.11 is recommended. With [uv](https://docs.astral.sh/uv/) installed:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) once, then
+double-click **Start_SmallLM.bat**. That is the only public entry point.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
-```
+On the first launch, the launcher automatically creates the Python environment
+and installs the required packages. Later launches open the chat interface
+directly. No SmallLM command-line commands are needed.
 
 ### Why Python 3.11 and uv?
 
@@ -64,146 +65,72 @@ packages, including the current NumPy and scikit-learn builds, while providing
 well-supported Windows wheels. Newer Python versions may work, but they are not
 the tested baseline for the committed checkpoint and scripts.
 
-`uv` keeps this choice isolated from the computer's system Python. The setup
-script asks it to create `.venv` with Python 3.11 and install the exact package
-versions from `requirements.txt`. If 3.11 is not already installed, `uv` can
+`uv` keeps this choice isolated from the computer's system Python. The first-run
+setup creates `.venv` with Python 3.11 and installs the exact package versions
+from `requirements.txt`. If 3.11 is not already installed, `uv` can
 [download the requested Python version automatically](https://docs.astral.sh/uv/guides/install-python/).
 This makes setup repeatable and avoids changing packages belonging to other
 Python projects or the operating system.
 
-The environment contains PyTorch and data-processing libraries only. No model
-download occurs because the trained tokenizer, retrieval index, and SmallLM
-checkpoint are committed to this repository.
+No model download occurs during setup because the trained tokenizer, retrieval
+index, and SmallLM checkpoint are already committed to this repository.
 
-## Ask questions
-
-```powershell
-.venv\Scripts\python.exe main.py ask --prompt "Hello"
-.venv\Scripts\python.exe main.py ask --prompt "How do I debug an HTTP 500 error?"
-.venv\Scripts\python.exe main.py ask --prompt "Convert 25 celsius to fahrenheit"
-```
-
-Show which component answered and the retrieval score:
-
-```powershell
-.venv\Scripts\python.exe main.py ask `
-  --prompt "Explain photosynthesis simply" `
-  --show-score
-```
-
-Choose a backend explicitly:
-
-```powershell
-# Recommended: retrieval for strong matches, transformer otherwise
-.venv\Scripts\python.exe main.py ask --backend hybrid --prompt "Your question"
-
-# Always generate with the new transformer
-.venv\Scripts\python.exe main.py ask --backend transformer --prompt "Your question"
-
-# Only retrieve a trained response
-.venv\Scripts\python.exe main.py ask --backend retrieval --prompt "Your question"
-```
-
-## Color terminal interface
-
-After running `setup.ps1`, double-click **Start_SmallLM.bat** on Windows. This
-launcher works even when Windows has no usable `.py` file association. You can
-also double-click **Main_Run_Program.py** when `.py` files are associated with
-Python, or launch it from a terminal:
-
-```powershell
-.venv\Scripts\python.exe Main_Run_Program.py
-```
+## Chat interface
 
 The home page has two large choices:
 
 - **Start Chat** opens a spacious, color-coded conversation screen. SmallLM
   displays animated thinking dots while it works, then progressively types its
   answer into a response panel.
-- **Settings** changes the response backend, temperature, top-k sampling,
-  response length, repetition controls, retrieval threshold, and typing speed.
+- **Settings** opens every user-facing model, conversation, and display control.
+
+The settings screen includes:
+
+- response backend, retrieval threshold, and number of retrieval candidates;
+- temperature, top-k sampling, response length, repetition penalty, no-repeat
+  phrase size, and random seed;
+- system prompt and conversation-memory length;
+- response typing speed and minimum thinking-animation time.
 
 Settings are session-only by design. They are never written to disk, so every
 new launch restores the documented defaults. The active model settings remain
-visible in the upper-right corner of the chat screen.
+visible in the upper-right corner of the chat screen. Enter `/settings` while
+chatting to change them immediately without leaving the conversation.
 
-While chatting, use `/clear` to erase conversation memory, `/help` to list
-commands, `/back` to return to the home page, or `/quit` to close the program.
-The original `main.py` command-line interface remains available for scripting.
+Chat commands:
 
-## Interactive chat
+- `/settings` edits and applies all runtime settings;
+- `/info` shows model architecture, dataset, and training statistics;
+- `/clear` erases the current conversation memory;
+- `/help` lists the available chat commands;
+- `/back` returns to the home page;
+- `/quit` closes SmallLM.
 
-```powershell
-.venv\Scripts\python.exe main.py chat --show-backend
-```
+Selecting the `transformer` backend in Settings provides direct transformer
+generation. The default `hybrid` backend keeps the grounding and retrieval
+fallbacks enabled.
 
-The chat loop keeps the recent conversation in the transformer's prompt. The
-hybrid backend rejects topically disconnected generations and falls back to a
-retrieved human response or an explicit uncertainty. Type `quit` or `exit` to
-stop.
-
-## Direct transformer generation
-
-```powershell
-.venv\Scripts\python.exe main.py generate `
-  --prompt "<bos><system>`nYou are helpful.`n<user>`nExplain gravity.`n<assistant>`n" `
-  --max-new-tokens 100 `
-  --temperature 0.7 `
-  --top-k 40 `
-  --seed 42
-```
-
-## Rebuild the data and train from scratch
+## Training and reproducibility
 
 Dataset preparation downloads OASST1, OASST2, and Databricks Dolly, applies the
 documented safety and quality filters, removes duplicates, and writes separate
-deterministic transformer-training and retrieval JSONL files:
-
-```powershell
-uv pip install --python .venv\Scripts\python.exe -r requirements-data.txt
-.venv\Scripts\python.exe main.py prepare-data
-```
-
-Train the retrieval index, tokenizer, and transformer:
-
-```powershell
-.venv\Scripts\python.exe main.py train `
-  --epochs 8 `
-  --batch-size 12 `
-  --rebuild-tokenizer
-```
+deterministic transformer-training and retrieval JSONL files.
 
 Training runs on CPU, holds out five percent of examples for validation, masks
 prompt tokens so loss focuses on assistant responses, uses AdamW with warmup and
 cosine decay, clips gradients, and saves the best validation checkpoint after
-each epoch. All random generators use a configurable seed. Add `--resume` to
-continue a checkpoint on the same checksummed corpus with a fresh optimizer.
-
-Advanced architecture options are available directly through
-`scripts/train_transformer.py`:
-
-```powershell
-.venv\Scripts\python.exe scripts\train_transformer.py --help
-```
-
-## Inspect and evaluate
-
-```powershell
-.venv\Scripts\python.exe main.py info
-.venv\Scripts\python.exe scripts\evaluate.py --backend retrieval
-.venv\Scripts\python.exe scripts\evaluate.py --backend hybrid --limit 5
-.venv\Scripts\python.exe -m unittest -v
-```
+each epoch. All random generators use a configurable seed.
 
 Generated reports are saved under `artifacts/` with the trained checkpoint,
-tokenizer, and retrieval index.
+tokenizer, and retrieval index. Training, evaluation, and the retained
+`main.py` CLI are internal maintenance utilities rather than public usage paths.
 
 ## Repository layout
 
 ```text
 Main_Run_Program.py             color terminal home, settings, and chat UI
-Start_SmallLM.bat               reliable one-click Windows launcher
-main.py                         command-line interface
+Start_SmallLM.bat               public one-click launcher and first-run setup
+main.py                         internal maintenance CLI
 smalllm/backend.py              transformer architecture and generation
 smalllm/assistant.py            tools, retrieval, memory, routing
 smalllm/retrieval.py            from-scratch TF-IDF retrieval model

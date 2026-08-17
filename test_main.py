@@ -18,7 +18,7 @@ from smalllm.config import (
 )
 from smalllm.retrieval import TrainedRetriever, load_corpus
 from smalllm.tools import run_tool
-from Main_Run_Program import RuntimeSettings
+from Main_Run_Program import SETTING_DEFINITIONS, RuntimeSettings, model_info_rows
 
 
 class ToolTests(unittest.TestCase):
@@ -192,12 +192,22 @@ class ProjectTests(unittest.TestCase):
         settings.set_from_text("max_new_tokens", "64")
         settings.set_from_text("no_repeat_ngram_size", "0")
         settings.set_from_text("retrieval_threshold", "0.65")
+        settings.set_from_text("retrieval_limit", "5")
+        settings.set_from_text("max_history_messages", "12")
+        settings.set_from_text("system_prompt", "Answer clearly and briefly.")
+        settings.set_from_text("seed", "99")
+        settings.set_from_text("thinking_delay", "0.25")
         translated = settings.assistant_settings()
 
         self.assertEqual(translated.generation.top_k, 72)
         self.assertEqual(translated.generation.max_new_tokens, 64)
         self.assertEqual(translated.generation.no_repeat_ngram_size, 0)
         self.assertEqual(translated.direct_retrieval_threshold, 0.65)
+        self.assertEqual(translated.retrieval_limit, 5)
+        self.assertEqual(translated.max_history_messages, 12)
+        self.assertEqual(translated.system_prompt, "Answer clearly and briefly.")
+        self.assertEqual(translated.seed, 99)
+        self.assertEqual(settings.thinking_delay, 0.25)
         with self.assertRaises(ValueError):
             settings.set_from_text("temperature", "2.1")
         with self.assertRaises(ValueError):
@@ -207,6 +217,24 @@ class ProjectTests(unittest.TestCase):
         settings = RuntimeSettings(temperature=1.5, typing_delay=0.0)
         settings.reset()
         self.assertEqual(settings, RuntimeSettings())
+
+    def test_chat_ui_exposes_every_runtime_setting(self) -> None:
+        exposed = {definition.key for definition in SETTING_DEFINITIONS}
+        self.assertEqual(exposed, set(vars(RuntimeSettings())))
+
+    def test_chat_model_info_replaces_public_cli_info(self) -> None:
+        info = dict(model_info_rows())
+        self.assertEqual(info["Parameters"], "6,836,224")
+        self.assertEqual(info["Pretrained weights"], "none")
+        self.assertEqual(info["Retrieval scenarios"], "25,189")
+
+    def test_readme_has_chat_only_public_usage(self) -> None:
+        readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("double-click **Start_SmallLM.bat**", readme)
+        self.assertIn("That is the only public entry point", readme)
+        self.assertNotIn("main.py ask", readme)
+        self.assertNotIn("main.py chat", readme)
+        self.assertNotIn("main.py generate", readme)
 
     def test_cli_retrieval_smoke(self) -> None:
         result = subprocess.run(
