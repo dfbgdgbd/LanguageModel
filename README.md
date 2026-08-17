@@ -125,12 +125,21 @@ Generated reports are saved under `artifacts/` with the trained checkpoint,
 tokenizer, and retrieval index. Training, evaluation, and the retained
 `main.py` CLI are internal maintenance utilities rather than public usage paths.
 
+## Developer documentation
+
+Future maintainers should start with the
+[developer documentation index](documentations/README.md). The handbook covers
+architecture, the chat UI, model and retrieval internals, development setup,
+internal commands, data and training, testing, artifact formats, releases, and
+troubleshooting.
+
 ## Repository layout
 
 ```text
 Main_Run_Program.py             color terminal home, settings, and chat UI
 Start_SmallLM.bat               public one-click launcher and first-run setup
 main.py                         internal maintenance CLI
+documentations/README.md        developer maintenance handbook index
 smalllm/backend.py              transformer architecture and generation
 smalllm/assistant.py            tools, retrieval, memory, routing
 smalllm/retrieval.py            from-scratch TF-IDF retrieval model

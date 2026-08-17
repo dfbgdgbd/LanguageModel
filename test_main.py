@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import unittest
@@ -235,6 +236,34 @@ class ProjectTests(unittest.TestCase):
         self.assertNotIn("main.py ask", readme)
         self.assertNotIn("main.py chat", readme)
         self.assertNotIn("main.py generate", readme)
+
+    def test_developer_documentation_set_is_present(self) -> None:
+        documentation_root = PROJECT_ROOT / "documentations"
+        expected = {
+            "README.md",
+            "ARCHITECTURE.md",
+            "CHAT_INTERFACE.md",
+            "MODEL_AND_INFERENCE.md",
+            "DEVELOPMENT_ENVIRONMENT.md",
+            "INTERNAL_CLI.md",
+            "DATA_AND_TRAINING.md",
+            "TESTING_AND_EVALUATION.md",
+            "ARTIFACTS_AND_VERSIONING.md",
+            "MAINTENANCE_AND_RELEASES.md",
+            "TROUBLESHOOTING.md",
+        }
+        actual = {path.name for path in documentation_root.glob("*.md")}
+        self.assertEqual(actual, expected)
+        for name in expected:
+            document = documentation_root / name
+            content = document.read_text(encoding="utf-8")
+            self.assertTrue(content.startswith("# "), name)
+            self.assertGreater(len(content), 500, name)
+            for target in re.findall(r"\[[^]]+\]\(([^)]+)\)", content):
+                if "://" in target or target.startswith("#"):
+                    continue
+                relative_target = target.split("#", 1)[0]
+                self.assertTrue((document.parent / relative_target).is_file(), target)
 
     def test_cli_retrieval_smoke(self) -> None:
         result = subprocess.run(
