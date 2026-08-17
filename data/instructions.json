@@ -1,0 +1,317 @@
+[
+  {
+    "topic": "greeting",
+    "prompts": ["hello", "hi", "hey there", "good morning", "good afternoon", "greetings", "hello assistant"],
+    "responses": ["Hello! How can I help you today?", "Hi! Ask me a question or give me a task to work through.", "Hey there! What would you like help with?"]
+  },
+  {
+    "topic": "goodbye",
+    "prompts": ["goodbye", "bye", "see you later", "talk to you later", "I am done for now"],
+    "responses": ["Goodbye!", "See you later. I will be here when you want to continue."]
+  },
+  {
+    "topic": "thanks",
+    "prompts": ["thank you", "thanks", "that helped", "I appreciate it", "thanks for your help"],
+    "responses": ["You are welcome!", "Glad I could help.", "Happy to help. What would you like to do next?"]
+  },
+  {
+    "topic": "identity",
+    "prompts": ["who are you", "what are you", "what is your name", "describe yourself", "are you an assistant"],
+    "responses": ["I am SmallLM, a compact local query-response assistant trained from the data in this repository.", "I am an educational assistant that combines instruction retrieval with a character-level text generator."]
+  },
+  {
+    "topic": "capabilities",
+    "prompts": ["what can you do", "how can you help", "show your capabilities", "what questions can you answer", "what are you able to do", "what are you capable of"],
+    "responses": ["I can answer queries covered by my training data, explain common programming and science concepts, help with writing and planning, perform basic arithmetic, and generate experimental text.", "I work best on the topics represented in data/instructions.json. I can also calculate arithmetic and run an interactive chat."]
+  },
+  {
+    "topic": "limitations",
+    "prompts": ["what are your limitations", "can you answer anything", "are your answers always correct", "what do you not know", "how reliable are you"],
+    "responses": ["I am a small educational model, not a general-purpose pretrained LLM. I only answer covered topics reliably, I do not browse the web, and important facts should be verified.", "My knowledge comes from a small local dataset. I can miss unusual wording and cannot reason broadly like a billion-parameter LLM."]
+  },
+  {
+    "topic": "assistant_workflow",
+    "prompts": ["how do you answer questions", "how does the assistant work", "explain your response process", "where do your answers come from"],
+    "responses": ["I convert the query into weighted word features, compare it with trained prompt examples, and return a response from the best matching topic when confidence is high enough.", "My query mode uses TF-IDF retrieval over instruction examples. Unknown queries receive an honest fallback instead of a fabricated answer."]
+  },
+  {
+    "topic": "train_model",
+    "prompts": ["how do I train the model", "train the assistant", "what is the training command", "rebuild model json", "retrain with new data", "how do I rebuild the trained file"],
+    "responses": ["Run: python main.py train. By default it reads data/training.txt and data/instructions.json, then writes model.json.", "Add or edit examples in data/instructions.json, then run python main.py train to rebuild the saved model."]
+  },
+  {
+    "topic": "improve_model",
+    "prompts": ["how can I improve this model", "make the assistant smarter", "get better responses", "improve query matching", "expand the model knowledge"],
+    "responses": ["Add several realistic prompt paraphrases and concise verified responses for each new topic, retrain, then evaluate with held-out questions that are not exact copies of training prompts.", "Improve it by expanding clean instruction data, measuring retrieval accuracy, tuning the confidence threshold, and eventually replacing retrieval with a pretrained transformer when broader reasoning is required."]
+  },
+  {
+    "topic": "temperature",
+    "prompts": ["what is temperature", "explain generation temperature", "what does temperature control", "make generation less random", "make generated text more creative"],
+    "responses": ["Temperature changes randomness in character generation. Lower values favor common characters; higher values increase variety. Temperature does not affect the query-response retriever.", "Use a lower temperature for predictable continuation and a higher temperature for more surprising text. A value of zero is deterministic."]
+  },
+  {
+    "topic": "random_seed",
+    "prompts": ["what is a random seed", "why use a seed", "make output reproducible", "does the seed change output"],
+    "responses": ["A random seed initializes the sampler. Reusing the same model, prompt, settings, and seed produces the same sampled output.", "Seeds make random experiments reproducible. Change the seed when you want a different sampled result."]
+  },
+  {
+    "topic": "language_model",
+    "prompts": ["what is a language model", "define language model", "how does a language model work", "explain language models simply", "what is an LLM", "describe an LLM"],
+    "responses": ["A language model estimates patterns in sequences of text. Generative models use those patterns to predict or sample what comes next.", "A language model learns statistical relationships in text. Large neural models learn many layers of representations; this project demonstrates smaller retrieval and n-gram methods."]
+  },
+  {
+    "topic": "ngram",
+    "prompts": ["what is an n gram", "explain ngrams", "how does character generation work", "what is character backoff"],
+    "responses": ["An n-gram is a sequence of n items. This model counts which characters follow recent character contexts and backs off to shorter contexts when an exact one is unknown.", "Character n-grams model local spelling and phrase patterns. They are simple and fast, but they do not understand long-range meaning."]
+  },
+  {
+    "topic": "retrieval_model",
+    "prompts": ["what is retrieval", "explain retrieval based assistant", "what is tf idf", "how does prompt matching work", "what is cosine similarity"],
+    "responses": ["TF-IDF gives more weight to informative words and less weight to common ones. Cosine similarity then measures how closely a query vector matches each trained prompt vector.", "A retrieval assistant selects a stored response associated with the closest training examples. It is grounded and efficient but cannot synthesize arbitrary new knowledge."]
+  },
+  {
+    "topic": "transformer",
+    "prompts": ["what is a transformer model", "explain transformers", "how are transformers different", "what is attention in AI"],
+    "responses": ["A transformer is a neural architecture that uses attention to relate tokens across a sequence. Modern LLMs stack many transformer layers and train on very large datasets.", "Attention lets a transformer weigh relevant parts of its input while building contextual representations. This project does not implement a full transformer."]
+  },
+  {
+    "topic": "machine_learning",
+    "prompts": ["what is machine learning", "define machine learning", "explain ML", "how do machines learn from data"],
+    "responses": ["Machine learning builds systems that learn patterns from examples instead of relying only on hand-written rules.", "In machine learning, an algorithm adjusts a model using data so the model can make predictions or decisions on new inputs."]
+  },
+  {
+    "topic": "artificial_intelligence",
+    "prompts": ["what is artificial intelligence", "define AI", "explain artificial intelligence", "is machine learning AI"],
+    "responses": ["Artificial intelligence is the broad field of building systems that perform tasks associated with perception, reasoning, language, planning, or decision-making.", "Machine learning is one approach within artificial intelligence. AI also includes search, planning, knowledge representation, and rule-based methods."]
+  },
+  {
+    "topic": "overfitting",
+    "prompts": ["what is overfitting", "explain model overfitting", "why does a model memorize training data", "how can I reduce overfitting", "how can a model fit noise"],
+    "responses": ["Overfitting happens when a model learns training examples too specifically and performs poorly on new data. Use held-out evaluation, more representative data, regularization, or a simpler model to reduce it.", "A model that memorizes noise instead of general patterns is overfitting. Always evaluate with examples that were not used during training."]
+  },
+  {
+    "topic": "training_data_quality",
+    "prompts": ["what makes good training data", "how should I clean data", "why does data quality matter", "prepare a training dataset"],
+    "responses": ["Good training data is relevant, accurate, diverse, consistently formatted, legally usable, and representative of real inputs. Remove duplicates, private information, and incorrect examples.", "Data quality sets the ceiling for a small model. Prefer verified examples and realistic paraphrases over large amounts of noisy text."]
+  },
+  {
+    "topic": "python_language",
+    "prompts": ["what is Python", "tell me about Python programming", "why use Python", "is Python beginner friendly"],
+    "responses": ["Python is a general-purpose programming language known for readable syntax and a broad ecosystem. It is widely used for automation, web development, data work, and machine learning.", "Python is beginner-friendly while still being useful for production software. This project uses only its standard library."]
+  },
+  {
+    "topic": "python_function",
+    "prompts": ["how do I define a Python function", "show a Python function", "what is def in Python", "create a function in Python"],
+    "responses": ["Use def, a name, parameters, and an indented body. Example: def add(a, b): return a + b", "A Python function is declared with def. Keep it focused, give it a descriptive name, and return a value when the caller needs a result."]
+  },
+  {
+    "topic": "python_loop",
+    "prompts": ["how do I loop in Python", "show a Python for loop", "iterate over a list", "what is a while loop", "iterate through an array with Python"],
+    "responses": ["A for loop iterates over items: for item in items: print(item). Use a while loop when repetition should continue while a condition remains true.", "Python for loops work directly with iterables such as lists, ranges, and files. Avoid changing a list while iterating over it unless the behavior is deliberate."]
+  },
+  {
+    "topic": "python_list_comprehension",
+    "prompts": ["what is a list comprehension", "show list comprehension syntax", "make a list of squares in Python", "compact Python loop for a list"],
+    "responses": ["A list comprehension builds a list from an iterable. Example: squares = [number * number for number in range(10)].", "Use list comprehensions for short, readable transformations. Prefer a normal loop when the logic has several conditions or side effects."]
+  },
+  {
+    "topic": "debugging",
+    "prompts": ["how do I debug code", "my program is broken", "find a software bug", "what is a good debugging process", "help diagnose an error", "help me debug a script", "my Python code throws an exception"],
+    "responses": ["Reproduce the failure, read the complete error, reduce it to the smallest case, inspect assumptions and inputs, change one thing at a time, and add a regression test after fixing it.", "Start with evidence: exact inputs, output, stack trace, environment, and the last known working state. A minimal reproducible example makes most bugs easier to isolate."]
+  },
+  {
+    "topic": "algorithm",
+    "prompts": ["what is an algorithm", "define algorithm", "explain algorithms simply", "how do I design an algorithm"],
+    "responses": ["An algorithm is a finite sequence of steps for solving a problem. A good design clearly defines inputs, outputs, edge cases, correctness, and resource costs.", "Design an algorithm by stating the problem precisely, considering examples and edge cases, choosing data structures, writing steps, and testing the result."]
+  },
+  {
+    "topic": "variable",
+    "prompts": ["what is a variable in programming", "define variable", "how do variables work", "explain assignment"],
+    "responses": ["A variable is a name associated with a value. Assignment binds or updates that name, and the program can use the value later.", "Variables help programs store and refer to state. Their exact typing and lifetime rules depend on the programming language."]
+  },
+  {
+    "topic": "git_basics",
+    "prompts": ["what is Git", "explain version control", "why use git", "how does source control work"],
+    "responses": ["Git is a distributed version-control system. It records project history, supports branches, and helps people review and combine changes safely.", "Version control lets you inspect changes, restore earlier versions, collaborate, and keep work organized in intentional commits."]
+  },
+  {
+    "topic": "git_commit",
+    "prompts": ["how do I make a git commit", "git commit workflow", "save changes with git", "what commands commit files"],
+    "responses": ["Review git status and the diff, stage only intended files with git add, then run git commit -m followed by a concise message. Push when you are ready to publish.", "A good commit contains one coherent change and a message that explains its purpose. Inspect staged changes before committing."]
+  },
+  {
+    "topic": "json",
+    "prompts": ["what is JSON", "explain JSON format", "how is data stored in JSON", "what does a JSON object look like"],
+    "responses": ["JSON is a text format for objects, arrays, strings, numbers, booleans, and null. Objects use quoted keys, such as {\"name\": \"Mira\"}.", "JSON is portable and human-readable, but it does not support comments. Validate external JSON before trusting its structure."]
+  },
+  {
+    "topic": "api",
+    "prompts": ["what is an API", "define application programming interface", "how do APIs work", "why use an API"],
+    "responses": ["An API is a defined way for software components to communicate. It specifies available operations, inputs, outputs, and errors.", "Web APIs commonly exchange JSON over HTTP. Good clients handle authentication, timeouts, rate limits, validation, and error responses."]
+  },
+  {
+    "topic": "http",
+    "prompts": ["what is HTTP", "explain HTTP requests", "what are GET and POST", "how does the web transfer data", "what does a 404 status mean", "explain HTTP status codes"],
+    "responses": ["HTTP is the request-response protocol used by the web. GET usually retrieves a resource, while POST submits data or asks a server to perform an operation.", "An HTTP response includes a status code, headers, and often a body. Codes in the 200s generally indicate success, 400s client errors, and 500s server errors."]
+  },
+  {
+    "topic": "html_css",
+    "prompts": ["what are HTML and CSS", "difference between HTML and CSS", "how do I build a web page", "explain web page structure and style"],
+    "responses": ["HTML describes a page's structure and meaning; CSS controls presentation such as layout, color, and spacing. JavaScript can add behavior.", "Start a web page with semantic HTML, then use CSS for responsive layout and visual design. Test keyboard access and readable contrast."]
+  },
+  {
+    "topic": "sql",
+    "prompts": ["what is SQL", "how do databases use SQL", "show a SQL select query", "explain relational databases", "query rows from a database"],
+    "responses": ["SQL is a language for working with relational databases. A basic query is SELECT name FROM users WHERE active = 1;", "Relational databases store structured data in tables connected by keys. Parameterize queries instead of concatenating untrusted input."]
+  },
+  {
+    "topic": "cybersecurity",
+    "prompts": ["what is cybersecurity", "how do I stay secure online", "basic computer security tips", "protect my accounts"],
+    "responses": ["Use unique passwords with a password manager, enable multi-factor authentication, install updates, back up important data, and treat unexpected links or attachments cautiously.", "Security is risk management. Reduce exposure, use least privilege, keep recoverable backups, and verify important requests through a separate trusted channel."]
+  },
+  {
+    "topic": "passwords",
+    "prompts": ["how do I create a strong password", "password security advice", "should I reuse passwords", "what is a password manager"],
+    "responses": ["Use a password manager to generate and store a unique long password for every account. Enable multi-factor authentication where available.", "Do not reuse passwords. A breach at one service can otherwise expose other accounts that share the same credentials."]
+  },
+  {
+    "topic": "phishing",
+    "prompts": ["what is phishing", "how do I spot a phishing email", "is this message a scam", "avoid malicious links"],
+    "responses": ["Phishing uses deceptive messages to steal information or trigger harmful actions. Check the sender and domain, distrust urgency, avoid unexpected attachments, and verify requests through an independent channel.", "Do not enter credentials through a link in an unexpected message. Open the known official site yourself and contact the organization directly if unsure."]
+  },
+  {
+    "topic": "photosynthesis",
+    "prompts": ["what is photosynthesis", "how do plants make food", "why do plants need sunlight", "explain photosynthesis simply", "how does a plant turn light into energy", "how do plants turn light into energy"],
+    "responses": ["Photosynthesis is the process by which plants, algae, and some bacteria use light energy to convert carbon dioxide and water into sugars, releasing oxygen as a byproduct.", "Plants capture light energy and store it in chemical bonds. The sugars produced support growth and metabolism."]
+  },
+  {
+    "topic": "gravity",
+    "prompts": ["what is gravity", "why do objects fall", "explain gravitational force", "how does gravity work", "what is the force pulling us down"],
+    "responses": ["Gravity is the attraction between objects with mass. Near Earth it accelerates unsupported objects toward the planet's center.", "In general relativity, gravity is described as the curvature of spacetime caused by mass and energy."]
+  },
+  {
+    "topic": "water_cycle",
+    "prompts": ["what is the water cycle", "explain evaporation and rain", "how does water move through nature", "where does rain come from", "what causes clouds and rainfall"],
+    "responses": ["The water cycle moves water through evaporation, transpiration, condensation, precipitation, infiltration, and runoff. Solar energy and gravity drive the cycle.", "Water evaporates, condenses into clouds, returns as precipitation, and collects in soil, rivers, lakes, oceans, and living things."]
+  },
+  {
+    "topic": "dna",
+    "prompts": ["what is DNA", "what does DNA do", "explain genes", "how is genetic information stored", "what molecule carries inherited traits"],
+    "responses": ["DNA is a molecule that stores hereditary information using sequences of four chemical bases. Cells use parts of that information to build functional products such as proteins.", "A gene is a region of DNA associated with a functional product. Gene activity is also influenced by regulation and environment."]
+  },
+  {
+    "topic": "weather_climate",
+    "prompts": ["difference between weather and climate", "what is climate", "what is weather", "compare climate and weather"],
+    "responses": ["Weather describes short-term atmospheric conditions at a place and time. Climate describes long-term patterns and distributions of weather over decades or longer.", "A cold day is weather; a region's typical seasonal conditions are climate. Individual events do not by themselves establish a climate trend."]
+  },
+  {
+    "topic": "solar_system",
+    "prompts": ["what is the solar system", "name the planets", "how many planets orbit the sun", "describe our planetary system"],
+    "responses": ["The Solar System contains the Sun, eight planets, dwarf planets, moons, asteroids, comets, and smaller bodies. The planets are Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune.", "Gravity binds the Solar System. The planets orbit the Sun, while many moons orbit planets and dwarf planets."]
+  },
+  {
+    "topic": "atoms",
+    "prompts": ["what is an atom", "explain atomic structure", "what are protons neutrons and electrons", "what is matter made of"],
+    "responses": ["An atom is the basic unit of a chemical element. It has a nucleus containing protons and usually neutrons, surrounded by electrons described by quantum states.", "The number of protons identifies an element. Electron arrangements strongly influence how atoms bond and react."]
+  },
+  {
+    "topic": "electricity",
+    "prompts": ["what is electricity", "explain electric current", "difference between voltage and current", "how does a circuit work"],
+    "responses": ["Electric current is the flow of electric charge. Voltage is electric potential difference, and resistance opposes current.", "A closed circuit provides a path for charge flow. Ohm's law relates voltage, current, and resistance for ohmic components: V = I times R."]
+  },
+  {
+    "topic": "capital_france",
+    "prompts": ["what is the capital of France", "name France's capital", "which city is the French capital", "capital city of France"],
+    "responses": ["The capital of France is Paris."]
+  },
+  {
+    "topic": "continents",
+    "prompts": ["how many continents are there", "name the seven continents", "what are Earth's continents", "list all continents"],
+    "responses": ["In the common seven-continent model they are Africa, Antarctica, Asia, Europe, North America, South America, and Australia. Some regions use different grouping conventions."]
+  },
+  {
+    "topic": "largest_ocean",
+    "prompts": ["what is the largest ocean", "which ocean is biggest", "name the world's largest ocean", "largest ocean on Earth"],
+    "responses": ["The Pacific Ocean is Earth's largest and deepest ocean basin."]
+  },
+  {
+    "topic": "average",
+    "prompts": ["how do I calculate an average", "what is the arithmetic mean", "find the mean of numbers", "average formula"],
+    "responses": ["For the arithmetic mean, add all values and divide by the number of values. For example, the mean of 2, 4, and 9 is 15 divided by 3, which is 5.", "The word average can mean mean, median, or mode, so identify which measure the situation requires."]
+  },
+  {
+    "topic": "percentage",
+    "prompts": ["how do I calculate a percentage", "what percent is one number of another", "percentage formula", "find percent change"],
+    "responses": ["To find what percent A is of B, calculate A divided by B times 100, provided B is not zero.", "Percent change is (new minus old) divided by the absolute value of old, times 100. State how you handle an old value of zero."]
+  },
+  {
+    "topic": "prime_number",
+    "prompts": ["what is a prime number", "define prime", "how do I test if a number is prime", "explain prime numbers"],
+    "responses": ["A prime number is an integer greater than one with exactly two positive divisors: one and itself.", "To test a positive integer n for primality, check possible factors only through the square root of n. Two is the only even prime."]
+  },
+  {
+    "topic": "task_planning",
+    "prompts": ["help me plan a project", "how do I break down a task", "make a work plan", "where should I start on a big task", "organize a project", "help me prioritize a large workload"],
+    "responses": ["Define the desired outcome and constraints, split the work into testable milestones, identify dependencies and risks, start with the smallest useful deliverable, and review progress at clear checkpoints.", "Write down what done means, list the major components, order them by dependency, estimate effort, and choose one concrete next action."]
+  },
+  {
+    "topic": "time_management",
+    "prompts": ["how can I manage my time", "improve time management", "I have too many tasks", "prioritize my work", "stay focused"],
+    "responses": ["Choose a small number of high-impact priorities, schedule focused blocks, reduce notifications, leave buffer time, and review unfinished work at the end of the day.", "Separate urgent work from important work. Limit work in progress and make the next action for each active task specific."]
+  },
+  {
+    "topic": "study_skills",
+    "prompts": ["how should I study", "help me learn faster", "prepare for an exam", "remember what I read", "effective study techniques", "how can I memorize my class notes"],
+    "responses": ["Use active recall, spaced repetition, practice problems, and short explanations in your own words. Test yourself over multiple sessions instead of rereading once.", "Set a specific learning goal, study in focused sessions, retrieve ideas from memory, check errors, and revisit difficult material after increasing intervals."]
+  },
+  {
+    "topic": "summarization",
+    "prompts": ["how do I summarize text", "help write a summary", "what makes a good summary", "shorten a long passage", "make this paragraph shorter"],
+    "responses": ["Identify the main claim, essential supporting points, and conclusion. Rewrite them concisely in your own words without adding unsupported ideas.", "A good summary preserves the source's meaning and emphasis while removing repetition, minor examples, and unnecessary detail."]
+  },
+  {
+    "topic": "professional_email",
+    "prompts": ["how do I write a professional email", "help draft an email", "professional email structure", "make my email clearer", "draft a clear work message", "write a concise business email"],
+    "responses": ["Use a specific subject, a brief greeting, the purpose in the first sentence, necessary context, a clear request or next step, and a polite closing. Proofread names, dates, and attachments.", "Keep professional email concise and easy to act on. Put the requested action and deadline in clear language."]
+  },
+  {
+    "topic": "brainstorming",
+    "prompts": ["help me brainstorm", "generate ideas", "how do I think of more ideas", "I need creative options", "start a brainstorming session", "give me options for a new product"],
+    "responses": ["Define the goal and constraints, generate options without judging them, deliberately vary audience, scale, cost, and format, then group and evaluate the strongest ideas.", "Try producing ten rough ideas quickly, combining unrelated concepts, reversing assumptions, and asking what the simplest or most ambitious version would be."]
+  },
+  {
+    "topic": "writing_improvement",
+    "prompts": ["how can I improve my writing", "make writing clearer", "tips for concise writing", "edit a rough draft", "write better sentences"],
+    "responses": ["Lead with the main point, prefer concrete nouns and active verbs, remove repetition, vary sentence rhythm, and read the draft aloud. Revise for structure before polishing individual words.", "Clear writing gives each paragraph one job. Use examples where they add understanding and delete detail that does not support the purpose."]
+  },
+  {
+    "topic": "simple_explanation",
+    "prompts": ["explain something simply", "how do I teach a complex idea", "make an explanation beginner friendly", "explain like I am new"],
+    "responses": ["Start with the purpose, connect the new idea to something familiar, introduce one concept at a time, use a concrete example, and check understanding before adding detail.", "A beginner-friendly explanation defines necessary terms, avoids unexplained jargon, and shows one small worked example."]
+  },
+  {
+    "topic": "motivation",
+    "prompts": ["I need motivation", "help me get started", "I am procrastinating", "how do I build momentum", "encourage me to work"],
+    "responses": ["Shrink the task until the first step takes five minutes, remove one distraction, and begin before waiting to feel motivated. Momentum often follows action.", "Choose one visible next action and set a short timer. Finishing a small piece is more useful than designing a perfect plan you never start."]
+  },
+  {
+    "topic": "healthy_routine",
+    "prompts": ["how do I build healthy habits", "improve my daily routine", "general wellness tips", "create a sustainable habit"],
+    "responses": ["Start with a small behavior tied to an existing routine, make the environment support it, track consistency without demanding perfection, and adjust gradually. Seek qualified medical advice for health concerns.", "Sustainable routines usually include regular sleep, movement, nutritious food, social connection, and recovery, adapted to individual needs and professional guidance."]
+  },
+  {
+    "topic": "creative_story",
+    "prompts": ["give me a story idea", "creative writing prompt", "help me start a short story", "invent a fictional premise"],
+    "responses": ["Story prompt: A town's clocks begin counting down to different moments, and the only clockmaker who might understand them has disappeared.", "Story prompt: Every night a librarian finds one new book describing the following day, until a blank volume appears with the reader's name on its cover."]
+  },
+  {
+    "topic": "joke",
+    "prompts": ["tell me a joke", "say something funny", "give me a programming joke", "make me laugh", "tell me something humorous"],
+    "responses": ["Why did the function return early? It had a pressing argument.", "A bug walked into a code review. It did not leave, but it did receive several helpful comments."]
+  },
+  {
+    "topic": "unknown_queries",
+    "prompts": ["why did you not answer", "why is my query unknown", "what does low confidence mean", "you do not know the answer"],
+    "responses": ["An unknown result means the query did not match the trained examples strongly enough. Rephrase it using specific topic words or add new verified examples and retrain.", "The confidence threshold prevents weak matches from returning unrelated answers. You can expand the dataset rather than lowering the threshold too far."]
+  }
+]
